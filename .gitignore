@@ -1,6 +1,7 @@
 Cargo.lock
 yarn.lock
 package-lock.json
+test-ledger
 
 target/
 build/
