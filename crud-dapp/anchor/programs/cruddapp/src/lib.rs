@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("coUnmi3oBUtwtd9fjeAvSsJssXh5A5xyPbhpewyzRVF");
+declare_id!("9wg7BZjxcEpAqWhoiYGUT2hZM9iK6vcWGTYDah5mRVjC");
 
 #[program]
 pub mod cruddapp {
@@ -21,6 +21,10 @@ pub mod cruddapp {
       let journal_entry = &mut ctx.accounts.journal_entry;
       journal_entry.message = message;
 
+      Ok(())
+    }
+
+    pub fn delete_journal_entry(_ctx: Context<DeleteEntry>, _title: String) -> Result<()> {
       Ok(())
     }
 }
@@ -54,7 +58,22 @@ pub struct UpdateEntry<'info> {
     realloc::payer = owner,
     realloc::zero = true,
   )]
+  pub journal_entry: Account<'info, JournalEntryState>,
 
+  #[account(mut)]
+  pub owner: Signer<'info>,
+
+  pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(title: String)]
+pub struct DeleteEntry<'info> {
+  #[account(
+    mut,
+    seeds = [title.as_bytes(), owner.key().as_ref()],
+    bump,
+  )]
   pub journal_entry: Account<'info, JournalEntryState>,
 
   #[account(mut)]
