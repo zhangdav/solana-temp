@@ -15,7 +15,8 @@ declare_id!("FoQqCBMAjTAv9xSt2kQFT2YDimeNBrAnGTL5tHskCurx");
 pub mod swap {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        initialize::handler(ctx)
+    pub fn make_offer(context: Context<MakerOffer>) -> Result<()> {
+        instructions::make_offer::send_offered_tokens_to_vault()?;
+        instructions::make_offer::save_offer()
     }
 }
