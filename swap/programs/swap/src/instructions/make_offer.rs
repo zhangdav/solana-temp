@@ -4,6 +4,10 @@ use anchor_spl::{
     token_interface::{Mint, TokenAccount, TokenInterface},
 };
 
+use crate::{Offer, ANCHOR_DISCRIMINATOR};
+
+use super::transfer_tokens;
+
 #[derive(Accounts)]
 #[instruction(id: u64)]
 pub struct MakeOffer<'info> {
@@ -20,16 +24,16 @@ pub struct MakeOffer<'info> {
         mut,
         associated_token::mint = token_mint_a,
         associated_token::authority = maker,
-        associated_token::token_program = token_program,
+        associated_token::token_program = token_program
     )]
     pub maker_token_account_a: InterfaceAccount<'info, TokenAccount>,
 
     #[account(
         init,
         payer = maker,
-        space = ANCHOR_DISCRIMINATOR_SIZE + Offer::INIT_SPACE,
+        space = ANCHOR_DISCRIMINATOR + Offer::INIT_SPACE,
         seeds = [b"offer", maker.key().as_ref(), id.to_le_bytes().as_ref()],
-        bump,
+        bump
     )]
     pub offer: Account<'info, Offer>,
 
@@ -38,7 +42,7 @@ pub struct MakeOffer<'info> {
         payer = maker,
         associated_token::mint = token_mint_a,
         associated_token::authority = offer,
-        associated_token::token_program = token_program,
+        associated_token::token_program = token_program
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
@@ -54,9 +58,21 @@ pub fn send_offered_tokens_to_vault(
     transfer_tokens(
         &context.accounts.maker_token_account_a,
         &context.accounts.vault,
+        &token_a_offered_amount,
         &context.accounts.token_mint_a,
         &context.accounts.maker,
         &context.accounts.token_program,
-    )?;
+    )
+}
+
+pub fn save_offer(context: Context<MakeOffer>, id: u64, token_b_wanted_amount: u64) -> Result<()> {
+    context.accounts.offer.set_inner(Offer {
+        id,
+        maker: context.accounts.maker.key(),
+        token_mint_a: context.accounts.token_mint_a.key(),
+        token_mint_b: context.accounts.token_mint_b.key(),
+        token_b_wanted_amount,
+        bump: context.bumps.offer,
+    });
     Ok(())
 }
