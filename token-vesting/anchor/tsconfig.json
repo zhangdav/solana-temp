@@ -1,3 +1,7 @@
 {
-  "extends": "../tsconfig.json"
+  "extends": "../tsconfig.json",
+  "include": ["**/*.ts", "**/*.tsx", "**/*.d.ts"],
+  "compilerOptions": {
+    "typeRoots": ["../node_modules/@types", "./tests"]
+  }
 }
