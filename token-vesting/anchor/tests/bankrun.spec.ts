@@ -1,6 +1,6 @@
 import { PublicKey, Keypair } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
-import { BanksClient, ProgramTestContext, startAnchor } from "solana-bankrun";
+import { BanksClient, ProgramTestContext, startAnchor, Clock } from "solana-bankrun";
 import { BankrunProvider } from "anchor-bankrun";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 
@@ -8,9 +8,9 @@ import IDL from "../target/idl/tokenvesting.json";
 
 import { Tokenvesting } from "../target/types/tokenvesting"; 
 import { SYSTEM_PROGRAM_ID } from "@coral-xyz/anchor/dist/cjs/native/system";
-import { Program } from "@coral-xyz/anchor";
+import { Program, BN } from "@coral-xyz/anchor";
 // @ts-ignore
-import { createMint } from "spl-token-bankrun";
+import { createMint, mintTo } from "spl-token-bankrun";
 import NodeWallet from "@coral-xyz/anchor/dist/cjs/nodewallet";
 
 describe("Vesting Smart Contract Tests", ()  => {
@@ -98,4 +98,52 @@ describe("Vesting Smart Contract Tests", ()  => {
     console.log('Vesting Account Data:', vestingAccountData, null, 2);
     console.log('Create Vesting Account:', tx);
   });
+
+  it("should fund the treasury token account", async () => {
+    const amount = 10_000 * 10 ** 9;
+    const mintTx = await mintTo(
+      banksClient,
+      employer,
+      mint,
+      treasuryTokenAccount,
+      employer, 
+      amount
+    );
+
+    console.log('Mint Treasury Token Account:', mintTx);
+  });
+
+  it("should create employee vesting account", async () => {
+    const tx2 = await program.methods
+      .createEmployeeAccount(new BN(0), new BN(100), new BN(100), new BN(0))
+      .accounts({
+        beneficiary: beneficiary.publicKey,
+        vestingAccount: vestingAccountKey,
+      })
+      .rpc({ commitment: 'confirmed', skipPreflight: true });
+
+      console.log('Create Employee Account tx:', tx2);
+      console.log('Employee Account:', employeeAccount.toBase58());
+  });
+
+  it("should claim the employee's vested tokens", async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const currentClock = await banksClient.getClock();
+    context.setClock(
+      new Clock(
+        currentClock.slot,
+        currentClock.epochStartTimestamp,
+        currentClock.epoch,
+        currentClock.leaderScheduleEpoch,
+        BigInt(1000),
+      )
+    );
+
+    const tx3 = await program2.methods
+      .claimToken(companyName)
+      .accounts({ tokenProgram: TOKEN_PROGRAM_ID })
+      .rpc({ commitment: 'confirmed' });
+
+    console.log('Claim TOkens Tx:', tx3);
+  })
 });
