@@ -4,8 +4,10 @@ use anchor_spl::token_interface;
 
 use crate::state::{Bank, User};
 
+use crate::error::ErrorCode;
+
 #[derive(Accounts)]
-pub struct Deposit<'info> {
+pub struct Withdraw<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -33,7 +35,8 @@ pub struct Deposit<'info> {
     pub user_account: Account<'info, User>,
 
     #[account(
-        mut,
+        init_if_needed,
+        payer = signer,
         associated_token::mint = mint,
         associated_token::authority = signer,
         associated_token::token_program = token_program,
@@ -44,46 +47,57 @@ pub struct Deposit<'info> {
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
-pub fn process_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
+pub fn process_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+    let user = &mut ctx.accounts.user_account;
+
+    let deposited_value: u64;
+
+    if ctx.accounts.mint.to_account_info().key() == user.usdc_address {
+        deposited_value = user.deposited_usdc;
+    } else {
+        deposited_value = user.deposited_sol;
+    }
+
+    if amount > deposited_value {
+        return Err(ErrorCode::InsufficientFunds.into());
+    }
+
     let transfer_cpi_accounts = TransferChecked {
-        from: ctx.accounts.user_token_account.to_account_info(),
-        to: ctx.accounts.bank_token_account.to_account_info(),
-        authority: ctx.accounts.signer.to_account_info(),
+        from: ctx.accounts.bank_token_account.to_account_info(),
+        to: ctx.accounts.user_token_account.to_account_info(),
+        authority: ctx.accounts.bank.to_account_info(),
         mint: ctx.accounts.mint.to_account_info(),
     };
 
     let cpi_program = ctx.accounts.token_program.to_account_info();
-    let cpi_ctx = CpiContext::new(cpi_program, transfer_cpi_accounts);
+
+    let mint_key = ctx.accounts.mint.key();
+    let signer_seeds: &[&[&[u8]]] = &[&[
+        b"treasury",
+        mint_key.as_ref(),
+        &[ctx.bumps.bank_token_account],
+    ]];
+    let cpi_ctx = CpiContext::new(cpi_program, transfer_cpi_accounts).with_signer(signer_seeds);
 
     let decimals = ctx.accounts.mint.decimals;
 
     token_interface::transfer_checked(cpi_ctx, amount, decimals)?;
 
     let bank = &mut ctx.accounts.bank;
-
-    if bank.total_deposits == 0 {
-        bank.total_deposits = amount;
-        bank.total_deposit_shares = amount;
-    }
-
-    let deposit_ratio = amount.checked_div(bank.total_deposits).unwrap();
-    let user_shares = bank.total_deposit_shares.checked_mul(deposit_ratio).unwrap();
+    let shares_to_remove = (amount as f64 / bank.total_deposits as f64) * bank.total_deposit_shares as f64;
 
     let user = &mut ctx.accounts.user_account;
 
-    match ctx.accounts.mint.to_account_info().key() {
-        key if key == user.usdc_address => {
-            user.deposited_usdc += amount;
-            user.deposited_usdc_shares += user_shares;
-        },
-        _ => {
-            user.deposited_sol += amount;
-            user.deposited_sol_shares += user_shares;
-        }
+    if ctx.accounts.mint.to_account_info().key() == user.usdc_address {
+        user.deposited_usdc -= amount;
+        user.deposited_usdc_shares -= shares_to_remove as u64;
+    } else {
+        user.deposited_sol -= amount;
+        user.deposited_sol_shares -= shares_to_remove as u64;
     }
 
-    bank.total_deposits += amount;
-    bank.total_deposit_shares += user_shares;
+    bank.total_deposits -= amount;
+    bank.total_deposit_shares -= shares_to_remove as u64;
 
     Ok(())
 }

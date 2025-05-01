@@ -1,13 +1,15 @@
 use anchor_lang::prelude::*;
+use instructions::*;
 
 mod instructions;
 mod state;
+mod error;
 
 declare_id!("B8McKr94AXQod2deREAaWgWibTzdxeW1FkhRg3GH651W");
 
 #[program]
 pub mod lending {
-    use crate::instructions::admin::InitBank;
+    use crate::instructions::*;
     use anchor_lang::prelude::*;
 
     pub fn init_bank(
@@ -23,6 +25,10 @@ pub mod lending {
     }
 
     pub fn deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
-        deposit(ctx, amount)
+        process_deposit(ctx, amount)
+    }
+
+    pub fn withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
+        process_withdraw(ctx, amount)
     }
 }
