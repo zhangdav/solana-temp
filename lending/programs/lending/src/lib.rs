@@ -1,9 +1,10 @@
 use anchor_lang::prelude::*;
 use instructions::*;
 
+mod error;
 mod instructions;
 mod state;
-mod error;
+mod constants;
 
 declare_id!("B8McKr94AXQod2deREAaWgWibTzdxeW1FkhRg3GH651W");
 
