@@ -103,13 +103,13 @@ pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
 
     token_interface::transfer_checked(cpi_ctx, amount, decimals)?;
 
-    if bank.total_borrow == 0 {
-        bank.total_borrow = amount;
-        bank.total_borrow_shares = amount;
+    if bank.total_borrowed == 0 {
+        bank.total_borrowed = amount;
+        bank.total_borrowed_shares = amount;
     }
 
-    let borrow_ratio = amount.checked_div(bank.total_borrow).unwrap();
-    let user_shares = bank.total_borrow_shares.checked_mul(borrow_ratio).unwrap();
+    let borrow_ratio = amount.checked_div(bank.total_borrowed).unwrap();
+    let user_shares = bank.total_borrowed_shares.checked_mul(borrow_ratio).unwrap();
 
     match ctx.accounts.mint.to_account_info().key() {
         key if key == user.usdc_address => {
@@ -121,6 +121,8 @@ pub fn process_borrow(ctx: Context<Borrow>, amount: u64) -> Result<()> {
             user.borrow_sol_shares += user_shares;
         }
     }
+
+    user.last_updated_borrowed = Clock::get()?.unix_timestamp;
 
     Ok(())
 }
