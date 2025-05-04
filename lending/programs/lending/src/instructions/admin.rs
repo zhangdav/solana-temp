@@ -29,7 +29,7 @@ pub struct InitBank<'info> {
     )]
     pub bank_token_account: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
-    pub system_program: Program<'info, SystemProgram>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]

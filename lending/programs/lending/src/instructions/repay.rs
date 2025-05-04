@@ -1,6 +1,12 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token_interface::{Mint, TokenAccount};
-use crate::state::Bank;
+use anchor_spl::token_interface;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked},
+};
+use crate::state::{Bank, User};
+use std::f64::consts::E;
+use crate::error::ErrorCode;
 
 #[derive(Accounts)]
 pub struct Repay<'info> {
@@ -38,7 +44,7 @@ pub struct Repay<'info> {
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
-    pub associated_token_program: Account<'info, AssociatedToken>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn process_repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
@@ -59,12 +65,14 @@ pub fn process_repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
 
     let bank = &mut ctx.accounts.bank;
 
-    bank.total_borrowed -= (bank.total_borrowed as f64 * E.powf(bank.interest_rate as f32 * time_diff as f32) as f32);
+    bank.total_borrowed -= (bank.total_borrowed as f64 * E.powf((bank.interest_rate as f32 * time_diff as f32) as f64)) as u64;
+
+    let value_per_share = bank.total_borrowed as f64 / bank.total_borrowed_shares as f64;
 
     let user_value = borrow_value / value_per_share as u64;
 
     if amount > user_value {
-        return Err(ErrCode::OverRepay.info())
+        return Err(ErrorCode::OverRepay.into())
     }
 
     let transfer_cpi_accounts = TransferChecked {

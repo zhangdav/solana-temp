@@ -43,7 +43,7 @@ pub struct Deposit<'info> {
     )]
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
-    pub system_program: Account<'info, System>,
+    pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
