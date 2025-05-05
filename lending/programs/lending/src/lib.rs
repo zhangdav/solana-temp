@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::prelude::Pubkey;
 use instructions::*;
 
 mod error;
