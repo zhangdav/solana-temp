@@ -1,5 +1,5 @@
-use anchor_lang::prelude::*;
 use crate::{constants::SEED_CONFIG_ACCOUNT, Config};
+use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct UpdateConfig<'info> {
@@ -17,4 +17,3 @@ pub fn process_update_config(ctx: Context<UpdateConfig>, min_health_factor: u64)
 
     Ok(())
 }
-    

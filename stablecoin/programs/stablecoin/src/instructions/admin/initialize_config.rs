@@ -1,12 +1,15 @@
+use crate::{
+    constants::{LIQUIDATION_BONUS, LIQUIDATION_THRESHOLD, MIN_HEALTH_FACTOR},
+    Config, MINT_DECIMALS, SEED_CONFIG_ACCOUNT, SEED_MINT_ACCOUNT,
+};
 use anchor_lang::prelude::*;
-use crate::{constants::{LIQUIDATION_THRESHOLD, LIQUIDATION_BONUS, MIN_HEALTH_FACTOR}, Config, MINT_DECIMALS, SEED_CONFIG_ACCOUNT, SEED_MINT_ACCOUNT};
 use anchor_spl::token_interface::{Mint, Token2022};
 
 #[derive(Accounts)]
 pub struct InitializeConfig<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
-    
+
     #[account(
         init,
         payer = authority,
