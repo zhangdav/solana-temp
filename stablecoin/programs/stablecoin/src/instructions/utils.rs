@@ -3,6 +3,19 @@ use crate::{
 };
 use anchor_lang::{prelude::*, solana_program::native_token::LAMPORTS_PER_SOL};
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
+
+pub fn check_health_factor(
+    collateral: &Account<Collateral>,
+    config: &Account<Config>,
+    price_feed: &Account<PriceUpdateV2>,
+) -> Result<()> {
+    let health_factor = calculate_health_factor(collateral, config, price_feed)?;
+    require!(
+        health_factor >= config.min_health_factor,
+        CustomError::BelowMinHealthFactor
+    );
+    Ok(())
+}
  
 pub fn calculate_health_factor(
     collateral: &Account<Collateral>,
