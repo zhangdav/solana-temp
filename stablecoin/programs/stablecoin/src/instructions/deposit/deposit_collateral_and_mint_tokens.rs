@@ -1,4 +1,7 @@
-use crate::{deposit_sol, instructions::check_health_factor, mint_tokens, Collateral, Config, SEED_COLLATERAL_ACCOUNT, SEED_CONFIG_ACCOUNT, SEED_SOL_ACCOUNT};
+use crate::{
+    deposit_sol, instructions::check_health_factor, mint_tokens, Collateral, Config,
+    SEED_COLLATERAL_ACCOUNT, SEED_CONFIG_ACCOUNT, SEED_SOL_ACCOUNT,
+};
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,

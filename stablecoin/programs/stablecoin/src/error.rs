@@ -6,5 +6,5 @@ pub enum CustomError {
     InvalidPrice,
 
     #[msg("Below minimum health factor")]
-    BelowMinHealthFactor
+    BelowMinHealthFactor,
 }
