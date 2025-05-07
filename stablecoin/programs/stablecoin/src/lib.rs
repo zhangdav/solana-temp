@@ -6,6 +6,8 @@ use constants::*;
 mod constants;
 use instructions::*;
 mod instructions;
+use error::*;
+mod error;
 
 declare_id!("8Ae33BgCJ7HYQ9sWmE2C5t5PCW6Y4Nc7rNyMTx6JNQTx");
 
