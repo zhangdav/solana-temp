@@ -1,5 +1,5 @@
 use crate::{
-    burn_tokens_internal, check_health_factor, withdraw_sol_internal, Collateral, Config,
+    burn_tokens, check_health_factor, withdraw_sol, Collateral, Config,
     SEED_COLLATERAL_ACCOUNT, SEED_CONFIG_ACCOUNT,
 };
 use anchor_lang::prelude::*;
@@ -47,5 +47,29 @@ pub fn process_redeem_collateral_and_burn_tokens(
     amount_collateral: u64,
     amount_to_burn: u64,
 ) -> Result<()> {
+    let collateral_account = &mut ctx.accounts.collateral_account;
+
+    collateral_account.lamport_balance = ctx.accounts.sol_account.lamports() - amount_collateral;
+    collateral_account.amount_minted -= amount_to_burn;
+
+    check_health_factor(&ctx.accounts.collateral_account, &ctx.accounts.config_account, &ctx.accounts.price_update)?;
+
+    burn_tokens(
+        &ctx.accounts.token_program,
+        &ctx.accounts.mint_account,
+        &ctx.accounts.token_account,
+        &ctx.accounts.depositor,
+        amount_to_burn,
+    )?;
+
+    withdraw_sol(
+        ctx.accounts.collateral_account.bump_sol_account,
+        &ctx.accounts.depositor.key(),
+        &ctx.accounts.system_program,
+        &ctx.accounts.sol_account,
+        &ctx.accounts.depositor.to_account_info(),
+        amount_collateral,
+    )?;
+
     Ok(())
 }
