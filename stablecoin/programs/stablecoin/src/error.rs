@@ -7,4 +7,7 @@ pub enum CustomError {
 
     #[msg("Below minimum health factor")]
     BelowMinHealthFactor,
+
+    #[msg("Above minimum health factor")]
+    AboveMinHealthFactor,
 }

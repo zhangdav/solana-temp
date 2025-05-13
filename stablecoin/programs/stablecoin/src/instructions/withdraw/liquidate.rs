@@ -42,3 +42,49 @@ pub struct Liquidate<'info> {
     pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
 }
+
+pub fn process_liquidate(ctx: Context<Liquidate>, amount_to_burn: u64) -> Result<()> {
+    let health_factor = calculate_health_factor(
+        &ctx.accounts.collateral_account,
+        &ctx.accounts.config_account,
+        &ctx.accounts.price_update,
+    )?;
+
+    require!(
+        health_factor < ctx.accounts.config_account.min_health_factor,
+        CustomError::AboveMinHealthFactor,
+    );
+
+    let lamports = get_lamports_from_usd(&amount_to_burn, &ctx.accounts.price_update)?;
+    let liquidation_bonus = lamports * ctx.accounts.config_account.liquidation_bonus / 100;
+    let amount_to_liquidate = lamports + liquidation_bonus;
+
+    withdraw_sol(
+        ctx.accounts.collateral_account.bump_sol_account,
+        &ctx.accounts.collateral_account.depositor,
+        &ctx.accounts.system_program,
+        &ctx.accounts.sol_account,
+        &ctx.accounts.liquidator.to_account_info(),
+        amount_to_liquidate,
+    )?;
+ 
+    burn_tokens(
+        &ctx.accounts.token_program,
+        &ctx.accounts.mint_account,
+        &ctx.accounts.token_account,
+        &ctx.accounts.liquidator,
+        amount_to_burn,
+    )?;
+
+    let collateral_account = &mut ctx.accounts.collateral_account;
+    collateral_account.lamport_balance = ctx.accounts.sol_account.lamports();
+    collateral_account.amount_minted -= amount_to_burn;
+
+    calculate_health_factor(
+        &ctx.accounts.collateral_account,
+        &ctx.accounts.config_account,
+        &ctx.accounts.price_update,
+    )?;
+
+    Ok(())
+}
