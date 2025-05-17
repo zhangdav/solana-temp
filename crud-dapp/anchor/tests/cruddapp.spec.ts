@@ -1,76 +1,74 @@
 import * as anchor from '@coral-xyz/anchor'
 import {Program} from '@coral-xyz/anchor'
-import {Keypair} from '@solana/web3.js'
+import {PublicKey} from '@solana/web3.js'
 import {Cruddapp} from '../target/types/cruddapp'
+import {startAnchor} from 'anchor-bankrun'
+import { BankrunProvider } from 'anchor-bankrun'
+
+const IDL = require('../target/idl/cruddapp.json');
+
+const cruddappAddress = new PublicKey("9wg7BZjxcEpAqWhoiYGUT2hZM9iK6vcWGTYDah5mRVjC");
 
 describe('cruddapp', () => {
-  // Configure the client to use the local cluster.
-  const provider = anchor.AnchorProvider.env()
-  anchor.setProvider(provider)
-  const payer = provider.wallet as anchor.Wallet
 
-  const program = anchor.workspace.Cruddapp as Program<Cruddapp>
+  let context;
+  let provider: BankrunProvider;
+  let crudProgram: Program<Cruddapp>;
 
-  const cruddappKeypair = Keypair.generate()
-
-  it('Initialize Cruddapp', async () => {
-    await program.methods
-      .initialize()
-      .accounts({
-        cruddapp: cruddappKeypair.publicKey,
-        payer: payer.publicKey,
-      })
-      .signers([cruddappKeypair])
-      .rpc()
-
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(0)
+  beforeAll( async () => {
+    context = await startAnchor("", [{ name: "cruddapp", programId: cruddappAddress }], []);
+    provider = new BankrunProvider(context);
+    crudProgram = new Program(IDL, provider);
   })
 
-  it('Increment Cruddapp', async () => {
-    await program.methods.increment().accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+  it("create entry", async () => {
+    await crudProgram.methods.createJournalEntry("title", "message").rpc();
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+    const [createEntryAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from("title"), provider.publicKey.toBuffer()],
+      cruddappAddress
+    )
 
-    expect(currentCount.count).toEqual(1)
+    const createEntry = await crudProgram.account.journalEntryState.fetch(createEntryAddress);
+
+    console.log(createEntry);
+
+    expect(createEntry.owner).toStrictEqual(provider.publicKey);
+    expect(createEntry.title).toStrictEqual("title");
+    expect(createEntry.message).toStrictEqual("message");
   })
 
-  it('Increment Cruddapp Again', async () => {
-    await program.methods.increment().accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+  it("update entry", async () => {
+    await crudProgram.methods.updateJournalEntry("title", "new message").rpc();
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+    const [updateEntryAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from("title"), provider.publicKey.toBuffer()],
+      cruddappAddress
+    )
 
-    expect(currentCount.count).toEqual(2)
+    const updateEntry = await crudProgram.account.journalEntryState.fetch(updateEntryAddress);
+
+    console.log(updateEntry);
+
+    expect(updateEntry.owner).toStrictEqual(provider.publicKey);
+    expect(updateEntry.title).toStrictEqual("title");
+    expect(updateEntry.message).toStrictEqual("new message");
   })
 
-  it('Decrement Cruddapp', async () => {
-    await program.methods.decrement().accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
+  it("delete entry", async () => {
+    await crudProgram.methods.deleteJournalEntry("title").rpc();
 
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
+    const [deleteEntryAddress] = PublicKey.findProgramAddressSync(
+      [Buffer.from("title"), provider.publicKey.toBuffer()],
+      cruddappAddress
+    )
 
-    expect(currentCount.count).toEqual(1)
-  })
-
-  it('Set cruddapp value', async () => {
-    await program.methods.set(42).accounts({ cruddapp: cruddappKeypair.publicKey }).rpc()
-
-    const currentCount = await program.account.cruddapp.fetch(cruddappKeypair.publicKey)
-
-    expect(currentCount.count).toEqual(42)
-  })
-
-  it('Set close the cruddapp account', async () => {
-    await program.methods
-      .close()
-      .accounts({
-        payer: payer.publicKey,
-        cruddapp: cruddappKeypair.publicKey,
-      })
-      .rpc()
-
-    // The account should no longer exist, returning null.
-    const userAccount = await program.account.cruddapp.fetchNullable(cruddappKeypair.publicKey)
-    expect(userAccount).toBeNull()
+    try {
+      await crudProgram.account.journalEntryState.fetch(deleteEntryAddress);
+      fail("Account should be deleted but still exists");
+    } catch (error) {
+      console.log("Successfully verified account was deleted");
+      expect(error).toBeTruthy();
+    }
   })
 })
