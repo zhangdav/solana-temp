@@ -1,62 +1,62 @@
 # Solana Development Projects
 
-This repository contains a collection of Solana blockchain projects using the Anchor framework. Each project demonstrates different aspects of Solana development, from basic smart contracts to more complex decentralized applications.
+This repository contains Solana blockchain projects built with the Anchor framework. Each project showcases different aspects of Solana development, from basic smart contracts to complex dApps.
 
 ## Projects Overview
 
 ### Favorites
-A simple Solana program that allows users to store their favorite number, color, and hobbies on-chain. This project demonstrates basic Anchor program structure, account creation, and data storage.
+A simple program allowing users to store favorite number, color, and hobbies on-chain.
 
 - **Program ID**: 9U8dmFf85HM4AWNNasgVFSF3ujXQkPDwvPGaZqSNoKBP
-- **Features**: PDA (Program Derived Address) accounts, string and vector storage
+- **Features**: PDA accounts, string and vector storage
 
 ### CRUD DApp
-A journal entry application that demonstrates Create, Read, Update, and Delete operations on Solana. Includes a Next.js frontend for interacting with the program.
+A journal application demonstrating Create, Read, Update, Delete operations with a Next.js frontend.
 
 - **Program ID**: 9wg7BZjxcEpAqWhoiYGUT2hZM9iK6vcWGTYDah5mRVjC
 - **Features**: Full CRUD operations, Next.js frontend, account management
 
 ### Token Lottery
-A token-based lottery system built on Solana. Users can enter the lottery using custom tokens.
+Token-based lottery system where users enter using custom tokens.
 
-- **Features**: Custom token integration, randomness implementation, prize distribution
+- **Features**: Custom token integration, randomness, prize distribution
 
 ### Lending
-A simplified lending protocol that allows users to deposit assets and borrow against them.
+Simplified lending protocol for depositing assets and borrowing against them.
 
-- **Features**: Interest rate calculations, collateralization, liquidation mechanisms
+- **Features**: Interest calculation, collateralization, liquidation mechanisms
 
-### New NFT
-A project for creating and managing NFTs on Solana.
+### NFT
+Project for creating and managing NFTs on Solana.
 
 - **Features**: NFT minting, metadata management, token standards
 
-### New Token
-A template for creating custom SPL tokens on Solana.
+### Token
+Template for creating custom SPL tokens.
 
-- **Features**: Token creation, minting, and distribution
+- **Features**: Token creation, minting, distribution
 
 ### Stablecoin
-An implementation of a stablecoin on Solana with price stability mechanisms.
+Stablecoin implementation with price stability mechanisms.
 
 - **Features**: Price oracles, stability algorithms, reserve management
 
 ### Swap
-A token swap protocol for exchanging different tokens on Solana.
+Token swap protocol for exchanging tokens on Solana.
 
 - **Features**: Automated market maker, liquidity pools, price discovery
 
 ### Token Vesting
-A vesting contract for gradually releasing tokens to recipients over time.
+Contract for gradually releasing tokens to recipients over time.
 
 - **Features**: Time-locked releases, vesting schedules, claim mechanisms
 
 ### Voting DApp
-A decentralized voting application built on Solana.
+Decentralized voting application.
 
 - **Features**: Proposal creation, voting mechanisms, result tabulation
 
-## Getting Started
+## Development Guide
 
 ### Prerequisites
 - Rust and Cargo
@@ -72,7 +72,7 @@ A decentralized voting application built on Solana.
    cd solana-temp
    ```
 
-2. Navigate to a specific project:
+2. Navigate to a project:
    ```bash
    cd favorites
    ```
@@ -82,27 +82,24 @@ A decentralized voting application built on Solana.
    yarn install
    ```
 
-4. Build the Anchor program:
+4. Build the program:
    ```bash
    anchor build
    ```
 
-5. Deploy to a Solana network (e.g., devnet):
+5. Deploy:
    ```bash
    anchor deploy
    ```
 
 ### Configuration
 
-Most projects use environment variables for configuration. Copy the `.env.example` file to `.env` and adjust the values as needed:
-
+Create environment variables:
 ```bash
 cp .env.example .env
 ```
 
 ## Testing
-
-Run tests for a specific project:
 
 ```bash
 cd project-name
@@ -111,8 +108,6 @@ anchor test
 
 ## Deployment
 
-Projects can be deployed to Solana devnet or mainnet using Anchor:
-
 ```bash
 solana config set --url devnet  # or mainnet
 anchor deploy
@@ -120,7 +115,7 @@ anchor deploy
 
 ## License
 
-This repository is licensed under the MIT License - see the LICENSE file for details.
+MIT License
 
 ## Acknowledgments
 
