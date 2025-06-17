@@ -19,9 +19,11 @@ pub struct TakeOffer<'info> {
     #[account(mut)]
     pub maker: SystemAccount<'info>,
 
-    pub token_mint_a: Box<InterfaceAccount<'info, Mint>>,
+    #[account(mint::token_program = token_program)]
+    pub token_mint_a: InterfaceAccount<'info, Mint>,
 
-    pub token_mint_b: Box<InterfaceAccount<'info, Mint>>,
+    #[account(mint::token_program = token_program)]
+    pub token_mint_b: InterfaceAccount<'info, Mint>,
 
     #[account(
         init_if_needed,
@@ -33,7 +35,8 @@ pub struct TakeOffer<'info> {
     pub taker_token_account_a: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
-        mut,
+        init_if_needed,
+        payer = taker,
         associated_token::mint = token_mint_b,
         associated_token::authority = taker,
         associated_token::token_program = token_program,
@@ -56,7 +59,7 @@ pub struct TakeOffer<'info> {
         has_one = token_mint_a,
         has_one = token_mint_b,
         seeds = [b"offer", maker.key().as_ref(), offer.id.to_le_bytes().as_ref()],
-        bump = offer.bump
+        bump,
     )]
     pub offer: Account<'info, Offer>,
 
@@ -66,7 +69,7 @@ pub struct TakeOffer<'info> {
         associated_token::authority = offer,
         associated_token::token_program = token_program,
     )]
-    pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
+    pub vault: InterfaceAccount<'info, TokenAccount>,
 
     pub system_program: Program<'info, System>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -84,14 +87,15 @@ pub fn send_wanted_tokens_to_maker(context: &Context<TakeOffer>) -> Result<()> {
     )
 }
 
-pub fn withdraw_and_close_vault(context: Context<TakeOffer>) -> Result<()> {
+pub fn withdraw_and_close_vault(context: &Context<TakeOffer>) -> Result<()> {
     let seeds = &[
         b"offer",
         context.accounts.maker.to_account_info().key.as_ref(),
         &context.accounts.offer.id.to_le_bytes()[..],
-        &[context.accounts.offer.bump],
+        &[context.bumps.offer],
     ];
-    let signer_seeds = [&seeds[..]];
+
+    let signer_seeds = &[&seeds[..]];
 
     let accounts = TransferChecked {
         from: context.accounts.vault.to_account_info(),
@@ -103,7 +107,7 @@ pub fn withdraw_and_close_vault(context: Context<TakeOffer>) -> Result<()> {
     let cpi_context = CpiContext::new_with_signer(
         context.accounts.token_program.to_account_info(),
         accounts,
-        &signer_seeds,
+        signer_seeds,
     );
 
     transfer_checked(
@@ -121,7 +125,7 @@ pub fn withdraw_and_close_vault(context: Context<TakeOffer>) -> Result<()> {
     let cpi_context = CpiContext::new_with_signer(
         context.accounts.token_program.to_account_info(),
         accounts,
-        &signer_seeds,
+        signer_seeds,
     );
 
     close_account(cpi_context)

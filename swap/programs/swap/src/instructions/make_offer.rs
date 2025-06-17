@@ -24,7 +24,7 @@ pub struct MakeOffer<'info> {
         mut,
         associated_token::mint = token_mint_a,
         associated_token::authority = maker,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program,
     )]
     pub maker_token_account_a: InterfaceAccount<'info, TokenAccount>,
 
@@ -33,7 +33,7 @@ pub struct MakeOffer<'info> {
         payer = maker,
         space = ANCHOR_DISCRIMINATOR + Offer::INIT_SPACE,
         seeds = [b"offer", maker.key().as_ref(), id.to_le_bytes().as_ref()],
-        bump
+        bump,
     )]
     pub offer: Account<'info, Offer>,
 
@@ -42,7 +42,7 @@ pub struct MakeOffer<'info> {
         payer = maker,
         associated_token::mint = token_mint_a,
         associated_token::authority = offer,
-        associated_token::token_program = token_program
+        associated_token::token_program = token_program,
     )]
     pub vault: InterfaceAccount<'info, TokenAccount>,
 
@@ -74,5 +74,6 @@ pub fn save_offer(context: Context<MakeOffer>, id: u64, token_b_wanted_amount: u
         token_b_wanted_amount,
         bump: context.bumps.offer,
     });
+
     Ok(())
 }
