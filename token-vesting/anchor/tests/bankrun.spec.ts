@@ -115,7 +115,7 @@ describe("Vesting Smart Contract Tests", ()  => {
 
   it("should create employee vesting account", async () => {
     const tx2 = await program.methods
-      .createEmployeeAccount(new BN(0), new BN(100), new BN(100), new BN(0))
+      .createEmployeeAccount(new BN(0), new BN(100), new BN(50), new BN(1000))
       .accounts({
         beneficiary: beneficiary.publicKey,
         vestingAccount: vestingAccountKey,
@@ -135,12 +135,12 @@ describe("Vesting Smart Contract Tests", ()  => {
         currentClock.epochStartTimestamp,
         currentClock.epoch,
         currentClock.leaderScheduleEpoch,
-        BigInt(1000),
+        BigInt(75), // Set time to 75 seconds, which is after cliff (50) but before end (100)
       )
     );
 
     const tx3 = await program2.methods
-      .claimToken(companyName)
+      .claimTokens(companyName)
       .accounts({ tokenProgram: TOKEN_PROGRAM_ID })
       .rpc({ commitment: 'confirmed' });
 
