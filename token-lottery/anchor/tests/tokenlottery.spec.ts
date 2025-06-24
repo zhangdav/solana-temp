@@ -12,7 +12,7 @@ describe('tokenlottery', () => {
 
   const program = anchor.workspace.Tokenlottery as Program<Tokenlottery>;
 
-  it('should init config', async () => {
+  it('should init', async () => {
     const initConfigIx = await program.methods.initialize(
       new anchor.BN(0),
       new anchor.BN(1850767612),
@@ -31,6 +31,22 @@ describe('tokenlottery', () => {
 
     const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [wallet.payer]);
     console.log('Your transaction signature', signature);
+
+    const initLotteryIx = await program.methods.initializeLottery().accounts({
+      tokenProgram: TOKEN_PROGRAM_ID
+    }).instruction();
+
+    const initLotteryTx = new anchor.web3.Transaction(
+      {
+        feePayer: provider.wallet.publicKey,
+        blockhash: blockhashWithContext.blockhash,
+        lastValidBlockHeight: blockhashWithContext.lastValidBlockHeight,
+      }
+    ).add(initLotteryIx);
+
+    const initiLotterySignature = await anchor.web3.sendAndConfirmTransaction(provider.connection, initLotteryTx, [wallet.payer], {skipPreflight: true});
+
+    console.log('Your initLottery signature', initiLotterySignature);
 
   }, 300000)
 })
