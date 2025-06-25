@@ -48,7 +48,6 @@ pub mod tokenlottery {
 
         Ok(())
     }
-
     pub fn initialize_lottery(ctx: Context<InitializeLottery>) -> Result<()> {
         let signer_seeds: &[&[&[u8]]] =
             &[&[b"collection_mint".as_ref(), &[ctx.bumps.collection_mint]]];
@@ -250,6 +249,24 @@ pub mod tokenlottery {
 
         Ok(())
     }
+
+    pub fn commit_randomness(ctx: Context<CommitRandomness>) -> Result<()> {
+        let clock = Clock::get()?;
+        let token_lottery = &mut ctx.accounts.token_lottery;
+        if ctx.accounts.payer.key() != token_lottery.authority {
+            return Err(ErrorCode::NotAuthorized.into());
+        }
+
+        let randomness_data = RandomnessAccountData::parse(ctx.accounts.randomness_account.data.borrow()).unwrap();
+
+        if randomness_data.seed_slot != clock.slot - 1 {
+            return Err(ErrorCode::RandomnessAlreadyRevealed.into());
+        }
+
+        token_lottery.randomness_account = ctx.accounts.randomness_account.key();
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -402,6 +419,24 @@ pub struct BuyTicket<'info> {
     pub rent: Sysvar<'info, Rent>,
 }
 
+#[derive(Accounts)]
+pub struct CommitRandomness<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"token_lottery".as_ref()],
+        bump = token_lottery.bump,
+    )]
+    pub token_lottery: Account<'info, TokenLottery>,
+
+    /// CHECK: The account's data is validated manually within the handler.
+    pub randomness_account: UncheckedAccount<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
 #[account]
 #[derive(InitSpace)]
 pub struct TokenLottery {
@@ -422,4 +457,10 @@ pub struct TokenLottery {
 pub enum ErrorCode {
     #[msg("Lottery is not open")]
     LotteryNotOpen,
+
+    #[msg("Not authorized")]
+    NotAuthorized,
+
+    #[msg("Randomness already revealed")]
+    RandomnessAlreadyRevealed,
 }

@@ -12,6 +12,26 @@ describe('tokenlottery', () => {
 
   const program = anchor.workspace.Tokenlottery as Program<Tokenlottery>;
 
+  // let switchboardProgram: anchor.Program<any>;
+  const switchboardProgram = new anchor.Program(SwitchboardIDL as anchor.Idl, provider);
+  const rngKp = anchor.web3.Keypair.generate();
+
+  // beforeAll(async () => {
+  //   const switchboardIDL = await anchor.Program.fetchIdl(
+  //     sb.SB_ON_DEMAND_PID,
+  //     {connection: new anchor.web3.Connection("https://mainnet.helius-rpc.com/?api-key=c5730fdb-3471-42ff-92ad-97256fa83871")}
+  //   ) as anchor.Idl;
+
+  //   var fs = require("fs");
+  //   fs.writeFileSync("switchboard.json", JSON.stringify(switchboardIDL, function(err) {
+  //     if (err) {
+  //       console.error(err);
+  //     }
+  //   }));
+
+  //   switchboardProgram = new anchor.Program(switchboardIDL, provider);
+  // })
+  
   async function buyTicket() {
     const buyTicketIx = await program.methods.buyTicket().accounts({
       tokenProgram: TOKEN_PROGRAM_ID
@@ -74,6 +94,80 @@ describe('tokenlottery', () => {
     console.log('Your initLottery signature', initiLotterySignature);
 
     await buyTicket();
+    await buyTicket();
+    await buyTicket();
+    await buyTicket();
+    await buyTicket();
+    await buyTicket();
+    await buyTicket();
+
+    const queue = new anchor.web3.PublicKey("A43DyUGA7s8eXPxqEjJY6EBu1KKbNgfxF8h17VAHn13w");
+
+    const queueAccount = new sb.Queue(switchboardProgram, queue);
+    console.log("Queue account", queue.toString());
+    try {
+      await queueAccount.loadData();
+    } catch (err) {
+      console.log("Queue account not found");
+      process.exit(1);
+    }
+
+    const [randomness, createRandomnessIx] = await sb.Randomness.create(switchboardProgram, rngKp, queue);
+
+    const createRandomnessTx = await sb.asV0Tx({
+      connection: provider.connection,
+      ixs: [createRandomnessIx],
+      payer: wallet.publicKey,
+      signers: [wallet.payer, rngKp]
+    });
+
+    const createRandomnessSignature = await provider.connection.sendTransaction(createRandomnessTx);
+
+    console.log("Your createRandomness signature", createRandomnessSignature);
+
+    let confirmed = false;
+
+    while (!confirmed) {
+      try {
+        const confirmedRandomness = await provider.connection.getSignatureStatuses([createRandomnessSignature]);
+        const randomnessStatus = confirmedRandomness.value[0];
+        if (randomnessStatus?.confirmations != null && randomnessStatus.confirmationStatus === 'confirmed') {
+          confirmed = true;
+        }
+      } catch (error) {
+        console.log('Error', error);
+      }
+    }
+
+    const sbCommitIx = await randomness.commitIx(queue);
+
+    const commitIx = await program.methods.commitRandomness().accounts({
+      randomnessAccount: randomness.pubkey
+    }).instruction();
+
+    const commitComputeIx = anchor.web3.ComputeBudgetProgram.setComputeUnitLimit({
+      units: 100000
+    });
+
+    const commitPriorityIx = anchor.web3.ComputeBudgetProgram.setComputeUnitPrice({
+      microLamports: 1,
+    });
+
+    const commitBlockhashWithContext = await provider.connection.getLatestBlockhash();
+    const commitTx = new anchor.web3.Transaction({
+      feePayer: provider.wallet.publicKey,
+      blockhash: commitBlockhashWithContext.blockhash,
+      lastValidBlockHeight: commitBlockhashWithContext.lastValidBlockHeight,
+    })
+      .add(commitComputeIx)
+      .add(commitPriorityIx)
+      .add(commitIx)
+      .add(sbCommitIx);
+
+    const commitSignature = await anchor.web3.sendAndConfirmTransaction(
+      provider.connection, commitTx, [wallet.payer]
+    );
+    console.log("Commit randomness signature", commitSignature);
 
   }, 300000)
 })
