@@ -161,8 +161,8 @@ describe('tokenlottery', () => {
     })
       .add(commitComputeIx)
       .add(commitPriorityIx)
-      .add(commitIx)
-      .add(sbCommitIx);
+      .add(sbCommitIx)
+      .add(commitIx);
 
     const commitSignature = await anchor.web3.sendAndConfirmTransaction(
       provider.connection, commitTx, [wallet.payer]
