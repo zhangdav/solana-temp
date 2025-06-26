@@ -267,6 +267,32 @@ pub mod tokenlottery {
 
         Ok(())
     }
+
+    pub fn reveal_winner(ctx: Context<RevealWinner>) -> Result<()> {
+        let clock: Clock = Clock::get()?;
+        let token_lottery = &mut ctx.accounts.token_lottery;
+
+        if ctx.accounts.payer.key() != token_lottery.authority {
+            return Err(ErrorCode::NotAuthorized.into());
+        }
+
+        if clock.slot < token_lottery.end_time {
+            return Err(ErrorCode::LotteryNotCompleted.into());
+        }
+
+        require!(!token_lottery.winner_chosen, ErrorCode::WinnerChosen);
+
+        let randomness_data = RandomnessAccountData::parse(ctx.accounts.randomness_account.data.borrow()).unwrap();
+
+        let reveal_random_value = randomness_data.get_value(&clock).map_err(|_| ErrorCode::RandomnessNotRevealed)?;
+
+        let winner = reveal_random_value[0] as u64 % token_lottery.ticket_num;
+
+        token_lottery.winner = winner;
+        token_lottery.winner_chosen = true;
+
+        Ok(())
+    }
 }
 
 #[derive(Accounts)]
@@ -431,7 +457,25 @@ pub struct CommitRandomness<'info> {
     )]
     pub token_lottery: Account<'info, TokenLottery>,
 
-    /// CHECK: The account's data is validated manually within the handler.
+    /// CHECK: The account is checked by the Switchboard smart contract.
+    pub randomness_account: UncheckedAccount<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct RevealWinner<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"token_lottery".as_ref()],
+        bump = token_lottery.bump,
+    )]
+    pub token_lottery: Account<'info, TokenLottery>,
+
+    /// CHECK: The account is checked by the Switchboard smart contract.
     pub randomness_account: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
@@ -463,4 +507,13 @@ pub enum ErrorCode {
 
     #[msg("Randomness already revealed")]
     RandomnessAlreadyRevealed,
+
+    #[msg("Lottery is not completed")]
+    LotteryNotCompleted,
+
+    #[msg("Winner already chosen")]
+    WinnerChosen,
+
+    #[msg("Randomness not revealed")]
+    RandomnessNotRevealed,
 }
