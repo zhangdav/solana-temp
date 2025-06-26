@@ -202,5 +202,23 @@ describe('tokenlottery', () => {
 
     console.log("Reveal winner signature", revealSignature);
 
+    const claimIx = await program.methods.claimWinnings().accounts({
+      tokenProgram: TOKEN_PROGRAM_ID
+    }).instruction();
+
+    const claimBlockhashWithContext = await provider.connection.getLatestBlockhash();
+
+    const claimTx = new anchor.web3.Transaction({
+      feePayer: provider.wallet.publicKey,
+      blockhash: claimBlockhashWithContext.blockhash,
+      lastValidBlockHeight: claimBlockhashWithContext.lastValidBlockHeight,
+    }).add(claimIx);
+
+    const claimSignature = await anchor.web3.sendAndConfirmTransaction(
+      provider.connection, claimTx, [wallet.payer], {skipPreflight: true}
+    );
+
+    console.log("Claim winnings signature", claimSignature);
+
   }, 300000)
 })
