@@ -42,9 +42,10 @@ pub struct Deposit<'info> {
         associated_token::token_program = token_program,
     )]
     pub user_token_account: InterfaceAccount<'info, TokenAccount>,
+
     pub token_program: Interface<'info, TokenInterface>,
-    pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
 
 pub fn process_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
@@ -70,10 +71,7 @@ pub fn process_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
     }
 
     let deposit_ratio = amount.checked_div(bank.total_deposits).unwrap();
-    let user_shares = bank
-        .total_deposit_shares
-        .checked_mul(deposit_ratio)
-        .unwrap();
+    let user_shares = bank.total_deposit_shares.checked_mul(deposit_ratio).unwrap();
 
     let user = &mut ctx.accounts.user_account;
 
@@ -81,7 +79,7 @@ pub fn process_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
         key if key == user.usdc_address => {
             user.deposited_usdc += amount;
             user.deposited_usdc_shares += user_shares;
-        }
+        },
         _ => {
             user.deposited_sol += amount;
             user.deposited_sol_shares += user_shares;
@@ -90,8 +88,6 @@ pub fn process_deposit(ctx: Context<Deposit>, amount: u64) -> Result<()> {
 
     bank.total_deposits += amount;
     bank.total_deposit_shares += user_shares;
-
-    user.last_updated = Clock::get()?.unix_timestamp;
 
     Ok(())
 }
