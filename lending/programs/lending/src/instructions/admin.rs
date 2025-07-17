@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::Token;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::state::{Bank, User};
@@ -49,7 +48,11 @@ pub struct InitUser<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn process_init_bank(ctx: Context<InitBank>, liquidation_threshold: u64, max_ltv: u64) -> Result<()> {
+pub fn process_init_bank(
+    ctx: Context<InitBank>,
+    liquidation_threshold: u64,
+    max_ltv: u64,
+) -> Result<()> {
     let bank = &mut ctx.accounts.bank;
     bank.mint_address = ctx.accounts.mint.key();
     bank.authority = ctx.accounts.signer.key();
