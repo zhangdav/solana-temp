@@ -61,7 +61,24 @@ pub fn process_withdraw(ctx: Context<Withdraw>, amount: u64) -> Result<()> {
     } else {
         deposited_value = user.deposited_sol;
     }
-    if amount > deposited_value {
+
+    let time_diff = user.last_updated - Clock::get()?.unix_timestamp;
+
+    let bank = &mut ctx.accounts.bank;
+
+    // A = P × e^(rt)
+    // A: final principal + interest (account balance)
+    // P: initial principal (bank.total_deposits)
+    // e: natural constant ≈ 2.71828 (std::f64::consts::E)
+    // r: interest rate (bank.interest_rate, usually a floating point value expressed in seconds, hours, or years)
+    // t: time difference (time_diff, usually matches the unit of r)
+    bank.total_deposits = (bank.total_deposits as f64 * E.powf(bank.interest_rate as f64 * time_diff as f64)) as u64;
+
+    let value_per_share = bank.total_deposits as f64 / bank.total_deposit_shares as f64;
+
+    let user_value = deposited_value as f64 / value_per_share;
+
+    if user_value < amount as f64 {
         return Err(ErrorCode::InsufficientFunds.into());
     }
 
