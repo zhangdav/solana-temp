@@ -1,12 +1,12 @@
+use crate::error::ErrorCode;
+use crate::state::{Bank, User};
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{Mint, TokenAccount, TokenInterface, TransferChecked},
 };
-use crate::state::{Bank, User};
 use std::f64::consts::E;
-use crate::error::ErrorCode;
 
 #[derive(Accounts)]
 pub struct Repay<'info> {
@@ -42,10 +42,10 @@ pub struct Repay<'info> {
         associated_token::authority = signer,
         associated_token::token_program = token_program,
     )]
-    pub user_token_account: InterfaceAccount<'info, TokenAccount>, 
+    pub user_token_account: InterfaceAccount<'info, TokenAccount>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
-    pub associated_token_program: Program<'info, AssociatedToken>
+    pub associated_token_program: Program<'info, AssociatedToken>,
 }
 
 pub fn process_repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
@@ -64,7 +64,8 @@ pub fn process_repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
     let time_diff = user.last_updated_borrowed - user.last_updated;
     let bank = &mut ctx.accounts.bank;
 
-    bank.total_borrowed = (bank.total_borrowed as f64 * E.powf(bank.interest_rate as f64 * time_diff as f64)) as u64;
+    bank.total_borrowed =
+        (bank.total_borrowed as f64 * E.powf(bank.interest_rate as f64 * time_diff as f64)) as u64;
 
     let value_per_share = bank.total_borrowed as f64 / bank.total_borrow_shares as f64;
 

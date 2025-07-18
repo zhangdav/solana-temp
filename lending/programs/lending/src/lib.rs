@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 use instructions::*;
 
+mod constants;
 mod error;
 mod instructions;
 mod state;
-mod constants;
 
 declare_id!("B8McKr94AXQod2deREAaWgWibTzdxeW1FkhRg3GH651W");
 
@@ -38,5 +38,9 @@ pub mod lending {
 
     pub fn repay(ctx: Context<Repay>, amount: u64) -> Result<()> {
         process_repay(ctx, amount)
+    }
+
+    pub fn liquidate(ctx: Context<Liquidate>, amount: u64) -> Result<()> {
+        process_liquidation(ctx, amount)
     }
 }
