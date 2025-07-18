@@ -156,6 +156,7 @@ pub fn process_liquidation(ctx: Context<Liquidate>, amount: u64) -> Result<()> {
 
     token_interface::transfer_checked(cpi_ctx, liquidation_amount, decimals)?;
 
+    // Actually should calc by the collateral mint, and init the liquidation bonus
     let liquidation_bonus =
         (liquidation_amount * collateral_bank.liquidation_bonus) + liquidation_amount;
 
