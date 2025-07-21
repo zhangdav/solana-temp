@@ -75,6 +75,12 @@ pub fn process_deposit_collateral_and_mint_tokens(
         collateral_account.bump_sol_account = ctx.bumps.sol_account;
     }
 
+    check_health_factor(
+        &ctx.accounts.collateral_account,
+        &ctx.accounts.config_account,
+        &ctx.accounts.price_updated,
+    )?;
+
     deposit_sol(
         &ctx.accounts.depositor,
         &ctx.accounts.sol_account,

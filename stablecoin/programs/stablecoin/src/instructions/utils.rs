@@ -10,7 +10,10 @@ pub fn check_health_factor(
     price_feed: &Account<PriceUpdateV2>,
 ) -> Result<()> {
     let health_factor = calculate_health_factor(collateral, config, price_feed)?;
-    require!(health_factor >= config.min_health_factor, CustomError::HealthFactorTooLow);
+    require!(
+        health_factor >= config.min_health_factor,
+        CustomError::HealthFactorTooLow
+    );
 }
 
 pub fn calculate_health_factor(
