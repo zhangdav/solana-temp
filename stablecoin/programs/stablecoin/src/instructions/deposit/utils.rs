@@ -7,9 +7,9 @@ use anchor_spl::{
 };
 
 pub fn mint_tokens<'info>(
-    mint_account: InterfaceAccount<'info, Mint>,
-    token_account: InterfaceAccount<'info, TokenAccount>,
-    token_program: Program<'info, Token2022>,
+    mint_account: &InterfaceAccount<'info, Mint>,
+    token_account: &InterfaceAccount<'info, TokenAccount>,
+    token_program: &Program<'info, Token2022>,
     amount: u64,
     bump: u8,
 ) -> Result<()> {

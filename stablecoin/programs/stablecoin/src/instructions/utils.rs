@@ -12,8 +12,10 @@ pub fn check_health_factor(
     let health_factor = calculate_health_factor(collateral, config, price_feed)?;
     require!(
         health_factor >= config.min_health_factor,
-        CustomError::HealthFactorTooLow
+        CustomError::BelowMinHealthFactor
     );
+    
+    Ok(())
 }
 
 pub fn calculate_health_factor(
@@ -36,7 +38,7 @@ pub fn calculate_health_factor(
     Ok(health_factor)
 }
 
-pub fn get_usd_value(amount_in_lamports: u64, price_feed: &Account<PriceUpdateV2>) -> Result<u64> {
+pub fn get_usd_value(amount_in_lamports: &u64, price_feed: &Account<PriceUpdateV2>) -> Result<u64> {
     let feed_id = get_feed_id_from_hex(FEED_ID)?;
     let price = price_feed.get_price_no_older_than(&Clock::get()?, MAXIMUM_AGE, &feed_id)?;
 

@@ -1,5 +1,3 @@
-use std::hint::likely;
-
 use crate::{
     deposit_sol, instructions::check_health_factor, mint_tokens, Collateral, Config,
     SEED_COLLATERAL_ACCOUNT, SEED_CONFIG_ACCOUNT, SEED_SOL_ACCOUNT,
@@ -24,7 +22,7 @@ pub struct DepositCollateralAndMintTokens<'info> {
     pub config_account: Account<'info, Config>,
 
     #[account(mut)]
-    pub mint_account: Account<'info, Mint>,
+    pub mint_account: InterfaceAccount<'info, Mint>,
 
     #[account(
         init_if_needed,
@@ -40,7 +38,7 @@ pub struct DepositCollateralAndMintTokens<'info> {
         seeds = [SEED_SOL_ACCOUNT, depositor.key().as_ref()],
         bump,
     )]
-    pub sol_account: Account<'info, TokenAccount>,
+    pub sol_account: SystemAccount<'info>,
 
     #[account(
         init_if_needed,
@@ -52,9 +50,9 @@ pub struct DepositCollateralAndMintTokens<'info> {
     pub token_account: InterfaceAccount<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token2022>,
-    pub system_program: Program<'info, Program>,
+    pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-    pub price_update: Account<info, PriceUpdateV2>,
+    pub price_update: Account<'info, PriceUpdateV2>,
 }
 
 pub fn process_deposit_collateral_and_mint_tokens(
@@ -63,7 +61,7 @@ pub fn process_deposit_collateral_and_mint_tokens(
     amount_to_mint: u64,
 ) -> Result<()> {
     let collateral_account = &mut ctx.accounts.collateral_account;
-    collateral_account.lamport_balance = ctx.accounts.sol_account.lamport_balance;
+    collateral_account.lamport_balance = ctx.accounts.sol_account.lamports() + amount_collateral;
     collateral_account.token_balance += amount_to_mint;
 
     if !collateral_account.is_initialized {
@@ -78,7 +76,7 @@ pub fn process_deposit_collateral_and_mint_tokens(
     check_health_factor(
         &ctx.accounts.collateral_account,
         &ctx.accounts.config_account,
-        &ctx.accounts.price_updated,
+        &ctx.accounts.price_update,
     )?;
 
     deposit_sol(
@@ -93,7 +91,7 @@ pub fn process_deposit_collateral_and_mint_tokens(
         &ctx.accounts.token_account,
         &ctx.accounts.token_program,
         amount_to_mint,
-        &ctx.accounts.config_account.bump_mint_account,
+        ctx.accounts.config_account.bump_mint_account,
     )?;
 
     Ok(())
