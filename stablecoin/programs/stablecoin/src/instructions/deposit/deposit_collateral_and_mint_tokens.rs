@@ -75,5 +75,20 @@ pub fn process_deposit_collateral_and_mint_tokens(
         collateral_account.bump_sol_account = ctx.bumps.sol_account;
     }
 
+    deposit_sol(
+        &ctx.accounts.depositor,
+        &ctx.accounts.sol_account,
+        &ctx.accounts.system_program,
+        amount_collateral,
+    )?;
+
+    mint_tokens(
+        &ctx.accounts.mint_account,
+        &ctx.accounts.token_account,
+        &ctx.accounts.token_program,
+        amount_to_mint,
+        &ctx.accounts.config_account.bump_mint_account,
+    )?;
+
     Ok(())
 }
