@@ -73,6 +73,6 @@ pub fn process_redeem_collateral_and_burn_tokens(
         &ctx.accounts.depositor.to_account_info(),
         amount_collateral,
     )?;
- 
+
     Ok(())
 }
