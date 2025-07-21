@@ -1,6 +1,6 @@
 use crate::{
-    burn_tokens, check_health_factor, withdraw_sol, Collateral, Config,
-    SEED_COLLATERAL_ACCOUNT, SEED_CONFIG_ACCOUNT,
+    burn_tokens, check_health_factor, withdraw_sol, Collateral, Config, SEED_COLLATERAL_ACCOUNT,
+    SEED_CONFIG_ACCOUNT,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, Token2022, TokenAccount};
@@ -52,7 +52,11 @@ pub fn process_redeem_collateral_and_burn_tokens(
     collateral_account.lamport_balance = ctx.accounts.sol_account.lamports() - amount_collateral;
     collateral_account.amount_minted -= amount_to_burn;
 
-    check_health_factor(&ctx.accounts.collateral_account, &ctx.accounts.config_account, &ctx.accounts.price_update)?;
+    check_health_factor(
+        &ctx.accounts.collateral_account,
+        &ctx.accounts.config_account,
+        &ctx.accounts.price_update,
+    )?;
 
     burn_tokens(
         &ctx.accounts.token_program,

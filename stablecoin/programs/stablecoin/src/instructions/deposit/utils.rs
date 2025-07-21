@@ -7,13 +7,13 @@ use anchor_spl::{
 };
 
 pub fn mint_tokens<'info>(
-    mint_account: &InterfaceAccount<'info, Mint>,
-    token_account: &InterfaceAccount<'info, TokenAccount>,
-    token_program: &Program<'info, Token2022>,
+    mint_account: InterfaceAccount<'info, Mint>,
+    token_account: InterfaceAccount<'info, TokenAccount>,
+    token_program: Program<'info, Token2022>,
     amount: u64,
     bump: u8,
 ) -> Result<()> {
-    let signer_seeds: &[&[&[u8]]] = &[&[SEED_MINT_ACCOUNT, &[bump]]];
+    let signer_seeds: &[&[&[u8]]] = &[&[SEED_MINT_ACCOUNT.as_ref(), &[bump]]];
 
     mint_to(
         CpiContext::new_with_signer(
@@ -32,8 +32,8 @@ pub fn mint_tokens<'info>(
 pub fn deposit_sol<'info>(
     from: &Signer<'info>,
     to: &SystemAccount<'info>,
-    amount: u64,
     system_program: &Program<'info, System>,
+    amount: u64,
 ) -> Result<()> {
     transfer(
         CpiContext::new(

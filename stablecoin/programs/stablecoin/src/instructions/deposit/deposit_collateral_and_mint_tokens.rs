@@ -1,3 +1,5 @@
+use std::hint::likely;
+
 use crate::{
     deposit_sol, instructions::check_health_factor, mint_tokens, Collateral, Config,
     SEED_COLLATERAL_ACCOUNT, SEED_CONFIG_ACCOUNT, SEED_SOL_ACCOUNT,
@@ -19,26 +21,26 @@ pub struct DepositCollateralAndMintTokens<'info> {
         bump = config_account.bump,
         has_one = mint_account,
     )]
-    pub config_account: Box<Account<'info, Config>>,
+    pub config_account: Account<'info, Config>,
 
     #[account(mut)]
-    pub mint_account: InterfaceAccount<'info, Mint>,
+    pub mint_account: Account<'info, Mint>,
 
     #[account(
         init_if_needed,
         payer = depositor,
         space = 8 + Collateral::INIT_SPACE,
         seeds = [SEED_COLLATERAL_ACCOUNT, depositor.key().as_ref()],
-        bump
+        bump,
     )]
     pub collateral_account: Account<'info, Collateral>,
 
     #[account(
         mut,
         seeds = [SEED_SOL_ACCOUNT, depositor.key().as_ref()],
-        bump
+        bump,
     )]
-    pub sol_account: SystemAccount<'info>,
+    pub sol_account: Account<'info, TokenAccount>,
 
     #[account(
         init_if_needed,
@@ -48,10 +50,11 @@ pub struct DepositCollateralAndMintTokens<'info> {
         associated_token::token_program = token_program,
     )]
     pub token_account: InterfaceAccount<'info, TokenAccount>,
+
     pub token_program: Program<'info, Token2022>,
+    pub system_program: Program<'info, Program>,
     pub associated_token_program: Program<'info, AssociatedToken>,
-    pub system_program: Program<'info, System>,
-    pub price_update: Account<'info, PriceUpdateV2>,
+    pub price_update: Account<info, PriceUpdateV2>,
 }
 
 pub fn process_deposit_collateral_and_mint_tokens(
@@ -59,9 +62,9 @@ pub fn process_deposit_collateral_and_mint_tokens(
     amount_collateral: u64,
     amount_to_mint: u64,
 ) -> Result<()> {
-    let collateral_account = &mut ctx.accounts.collateral_account;
-    collateral_account.lamport_balance = ctx.accounts.sol_account.lamports() + amount_collateral;
-    collateral_account.amount_minted += amount_to_mint;
+    let collater_account = &mut ctx.accounts.collateral_account;
+    collater_accout.lamport_balance = ctx.accounts.sol_account.lamport_balance;
+    collater_account.token_balance += amount_to_mint;
 
     if !collateral_account.is_initialized {
         collateral_account.is_initialized = true;
@@ -71,27 +74,6 @@ pub fn process_deposit_collateral_and_mint_tokens(
         collateral_account.bump = ctx.bumps.collateral_account;
         collateral_account.bump_sol_account = ctx.bumps.sol_account;
     }
-
-    check_health_factor(
-        &ctx.accounts.collateral_account,
-        &ctx.accounts.config_account,
-        &ctx.accounts.price_update,
-    )?;
-
-    deposit_sol(
-        &ctx.accounts.depositor,
-        &ctx.accounts.sol_account,
-        amount_collateral,
-        &ctx.accounts.system_program,
-    )?;
-
-    mint_tokens(
-        &ctx.accounts.mint_account,
-        &ctx.accounts.token_account,
-        &ctx.accounts.token_program,
-        amount_to_mint,
-        ctx.accounts.config_account.bump_mint_account,
-    )?;
 
     Ok(())
 }

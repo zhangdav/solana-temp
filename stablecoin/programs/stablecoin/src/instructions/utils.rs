@@ -49,7 +49,10 @@ pub fn get_usd_value(amount_in_lamports: &u64, price_feed: &Account<PriceUpdateV
     Ok(amount_in_usd as u64)
 }
 
-pub fn get_lamports_from_usd(amount_in_usd: &u64, price_feed: &Account<PriceUpdateV2>) -> Result<u64> {
+pub fn get_lamports_from_usd(
+    amount_in_usd: &u64,
+    price_feed: &Account<PriceUpdateV2>,
+) -> Result<u64> {
     let feed_id = get_feed_id_from_hex(FEED_ID)?;
 
     let price = price_feed.get_price_no_older_than(&Clock::get()?, MAXIMUM_AGE, &feed_id)?;

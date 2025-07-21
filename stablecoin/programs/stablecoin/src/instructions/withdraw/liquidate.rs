@@ -1,6 +1,6 @@
 use crate::{
-    burn_tokens, calculate_health_factor, error::CustomError, get_lamports_from_usd,
-    withdraw_sol, Collateral, Config, SEED_CONFIG_ACCOUNT,
+    burn_tokens, calculate_health_factor, error::CustomError, get_lamports_from_usd, withdraw_sol,
+    Collateral, Config, SEED_CONFIG_ACCOUNT,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, Token2022, TokenAccount};
@@ -67,7 +67,7 @@ pub fn process_liquidate(ctx: Context<Liquidate>, amount_to_burn: u64) -> Result
         &ctx.accounts.liquidator.to_account_info(),
         amount_to_liquidate,
     )?;
- 
+
     burn_tokens(
         &ctx.accounts.token_program,
         &ctx.accounts.mint_account,
