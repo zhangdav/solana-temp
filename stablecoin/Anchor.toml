@@ -1,6 +1,4 @@
 [toolchain]
-package_manager = "yarn"
-anchor_version = "0.31.1"
 
 [features]
 resolution = true
@@ -13,7 +11,7 @@ stablecoin = "8Ae33BgCJ7HYQ9sWmE2C5t5PCW6Y4Nc7rNyMTx6JNQTx"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

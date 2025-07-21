@@ -15,7 +15,7 @@ pub struct InitializeConfig<'info> {
         payer = authority,
         space = 8 + Config::INIT_SPACE,
         seeds = [SEED_CONFIG_ACCOUNT],
-        bump
+        bump,
     )]
     pub config_account: Account<'info, Config>,
 
@@ -44,6 +44,8 @@ pub fn process_initialize_config(ctx: Context<InitializeConfig>) -> Result<()> {
         bump: ctx.bumps.config_account,
         bump_mint_account: ctx.bumps.mint_account,
     };
+
+    msg!("Config initialized");
 
     Ok(())
 }
