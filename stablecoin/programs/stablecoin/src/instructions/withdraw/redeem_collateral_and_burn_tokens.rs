@@ -38,17 +38,16 @@ pub struct RedeemCollateralAndBurnTokens<'info> {
     #[account(mut)]
     pub token_account: InterfaceAccount<'info, TokenAccount>,
 
-    pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token2022>,
+    pub system_program: Program<'info, System>,
 }
 
 pub fn process_redeem_collateral_and_burn_tokens(
     ctx: Context<RedeemCollateralAndBurnTokens>,
     amount_collateral: u64,
     amount_to_burn: u64,
-) -> Result<()> {
+) -> Resutl<()> {
     let collateral_account = &mut ctx.accounts.collateral_account;
-
     collateral_account.lamport_balance = ctx.accounts.sol_account.lamports() - amount_collateral;
     collateral_account.amount_minted -= amount_to_burn;
 
@@ -57,23 +56,4 @@ pub fn process_redeem_collateral_and_burn_tokens(
         &ctx.accounts.config_account,
         &ctx.accounts.price_update,
     )?;
-
-    burn_tokens(
-        &ctx.accounts.token_program,
-        &ctx.accounts.mint_account,
-        &ctx.accounts.token_account,
-        &ctx.accounts.depositor,
-        amount_to_burn,
-    )?;
-
-    withdraw_sol(
-        ctx.accounts.collateral_account.bump_sol_account,
-        &ctx.accounts.depositor.key(),
-        &ctx.accounts.system_program,
-        &ctx.accounts.sol_account,
-        &ctx.accounts.depositor.to_account_info(),
-        amount_collateral,
-    )?;
-
-    Ok(())
 }

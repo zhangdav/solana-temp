@@ -62,9 +62,9 @@ pub fn process_deposit_collateral_and_mint_tokens(
     amount_collateral: u64,
     amount_to_mint: u64,
 ) -> Result<()> {
-    let collater_account = &mut ctx.accounts.collateral_account;
-    collater_accout.lamport_balance = ctx.accounts.sol_account.lamport_balance;
-    collater_account.token_balance += amount_to_mint;
+    let collateral_account = &mut ctx.accounts.collateral_account;
+    collateral_account.lamport_balance = ctx.accounts.sol_account.lamport_balance;
+    collateral_account.token_balance += amount_to_mint;
 
     if !collateral_account.is_initialized {
         collateral_account.is_initialized = true;

@@ -1,5 +1,6 @@
 use crate::SEED_SOL_ACCOUNT;
 use anchor_lang::prelude::*;
+use anchor_lang::solana_program::example_mocks::solana_sdk::system_program;
 use anchor_lang::system_program::{transfer, Transfer};
 use anchor_spl::{
     token_2022::{burn, Burn},
@@ -7,14 +8,15 @@ use anchor_spl::{
 };
 
 pub fn withdraw_sol<'info>(
+    depositor: &Pubkey,
     bump: u8,
-    depositor_key: &Pubkey,
     system_program: &Program<'info, System>,
     from: &SystemAccount<'info>,
     to: &AccountInfo<'info>,
     amount: u64,
 ) -> Result<()> {
-    let signer_seeds: &[&[&[u8]]] = &[&[SEED_SOL_ACCOUNT, depositor_key.as_ref(), &[bump]]];
+    let signer_seeds: &[&[&[u8]]] =
+        &[&[SEED_SOL_ACCOUNT.as_ref(), depositor.key().as_ref(), &[bump]]];
 
     transfer(
         CpiContext::new_with_signer(
