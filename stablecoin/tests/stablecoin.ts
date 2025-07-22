@@ -10,31 +10,30 @@ describe("stablecoin", () => {
 
   anchor.setProvider(provider);
 
-  const program = anchor.workspace.stablecoin as Program<Stablecoin>;
+  const program = anchor.workspace.Stablecoin as Program<Stablecoin>;
 
-  const pythSolanaReceiver = new PythSolanaReceiver({ connection, wallet });
+  const pythSolanaReceiver = new PythSolanaReceiver({ connection, wallet});
 
   const SOL_PRICE_FEED_ID = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
-
   const solUsdPriceFeedAccount = pythSolanaReceiver.getPriceFeedAccountAddress(0, SOL_PRICE_FEED_ID);
 
   const [collateralAccount] = anchor.web3.PublicKey.findProgramAddressSync(
     [Buffer.from("collateral"), wallet.publicKey.toBuffer()],
-    program.programId
-  );
+    program.programId,
+  )
 
-  it("Is initialized!", async () => {
+  it("initializes the program", async () => {
     const tx = await program.methods
-    .initializeConfig()
-    .accounts({})
-    .rpc({ skipPreflight: true, commitment: "confirmed" });
+       .initializeConfig()
+       .accounts({})
+       .rpc({ skipPreflight: true, commitment: "confirmed" });
 
-    console.log("Your transaction signature", tx);
-  });
+    console.log("Your transaction signature:", tx);
+  })
 
   it("Deposit Collateral and Mint USDC", async () => {
     const amountCollateral = 1_000_000_000;
-    const amountToMint = 1_000_000_000;
+    const amountToMint = 1_000_000;
 
     const tx = await program.methods
       .depositCollateralAndMintTokens(
@@ -43,13 +42,13 @@ describe("stablecoin", () => {
       )
       .accounts({ priceUpdate: solUsdPriceFeedAccount })
       .rpc({ skipPreflight: true, commitment: "confirmed" });
-
-      console.log("Your transaction signature", tx)
+    
+    console.log("Your transaction signature:", tx);
   })
 
   it("Redeem Collateral and Burn USDC", async () => {
     const amountCollateral = 500_000_000;
-    const amountToBurn = 500_000_000;
+    const amountToBurn = 500_000;
 
     const tx = await program.methods
       .redeemCollateralAndBurnTokens(
@@ -58,8 +57,8 @@ describe("stablecoin", () => {
       )
       .accounts({ priceUpdate: solUsdPriceFeedAccount })
       .rpc({ skipPreflight: true, commitment: "confirmed" });
-
-      console.log("Your transaction signature", tx)
+    
+    console.log("Your transaction signature:", tx);
   })
 
   it("Update Config", async () => {
@@ -68,17 +67,18 @@ describe("stablecoin", () => {
       .accounts({})
       .rpc({ skipPreflight: true, commitment: "confirmed" });
 
-      console.log("Your transaction signature", tx)
+    console.log("Your transaction signature:", tx);
   })
 
   it("Liquidate", async () => {
     const amountToBurn = 500_000_000;
+
     const tx = await program.methods
       .liquidate(new anchor.BN(amountToBurn))
-      .accounts({collateralAccount, priceUpdate: solUsdPriceFeedAccount, })
+      .accounts({ collateralAccount, priceFeed: solUsdPriceFeedAccount})
       .rpc({ skipPreflight: true, commitment: "confirmed" });
 
-      console.log("Your transaction signature", tx)
+    console.log("Your transaction signature:", tx);
   })
 
   it("Update Config", async () => {
@@ -87,6 +87,6 @@ describe("stablecoin", () => {
       .accounts({})
       .rpc({ skipPreflight: true, commitment: "confirmed" });
 
-      console.log("Your transaction signature", tx)
+    console.log("Your transaction signature:", tx);
   })
-});
+})

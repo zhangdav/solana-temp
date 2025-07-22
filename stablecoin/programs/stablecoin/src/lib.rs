@@ -8,7 +8,7 @@ use instructions::*;
 mod error;
 mod instructions;
 
-declare_id!("8Ae33BgCJ7HYQ9sWmE2C5t5PCW6Y4Nc7rNyMTx6JNQTx");
+declare_id!("53vmyRHXyLtKZEFzW24VZAbBKvscRAWRiMrRjuQdbhAv");
 
 #[program]
 pub mod stablecoin {

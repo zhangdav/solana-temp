@@ -62,7 +62,7 @@ pub fn process_deposit_collateral_and_mint_tokens(
 ) -> Result<()> {
     let collateral_account = &mut ctx.accounts.collateral_account;
     collateral_account.lamport_balance = ctx.accounts.sol_account.lamports() + amount_collateral;
-    collateral_account.token_balance += amount_to_mint;
+    collateral_account.amount_minted += amount_to_mint;
 
     if !collateral_account.is_initialized {
         collateral_account.is_initialized = true;
